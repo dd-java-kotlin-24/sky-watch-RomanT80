@@ -1,12 +1,14 @@
-package edu.cnm.deepdive.skywatch.core.model.dto
+package edu.cnm.deepdive.skywatch.core.model.dto.nasa
 
 import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 import java.time.OffsetDateTime
 
+@JsonClass(generateAdapter = true)
 data class ItemData(
     val center: String,
     @Json(name = "date_created") val dateCreated: OffsetDateTime,
     val description: String,
-    val keywords: Array<String>,//TODO: Consider overriding equals and hashcode
+    val keywords: List<String>,//TODO: Consider overriding equals and hashcode
 
     )
