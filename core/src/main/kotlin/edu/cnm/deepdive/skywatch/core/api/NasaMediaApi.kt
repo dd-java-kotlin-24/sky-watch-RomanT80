@@ -10,7 +10,7 @@ interface NasaMediaApi {
     fun search(
         @Query("q") query: String? = null,
         @Query("media_type") mediatype: String = "image",
-        @Query("start_year") startYear: Int? = null,
-        @Query("end_year") endYear: Int? = null
+        @Query("year_start") startYear: Int? = null,
+        @Query("year_end") endYear: Int? = null
     ): Call<SearchResult>
 }

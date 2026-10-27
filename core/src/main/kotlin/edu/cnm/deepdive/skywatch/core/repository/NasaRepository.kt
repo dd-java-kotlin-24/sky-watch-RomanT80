@@ -1,9 +1,8 @@
-package edu.cnm.deepdive.skywatch.core.service
+package edu.cnm.deepdive.skywatch.core.repository
 
 import com.squareup.moshi.FromJson
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.ToJson
-import com.sun.jndi.toolkit.url.Uri
 import edu.cnm.deepdive.skywatch.core.api.NasaMediaApi
 import edu.cnm.deepdive.skywatch.core.model.SearchResultImage
 import edu.cnm.deepdive.skywatch.core.model.dto.nasa.ItemData
@@ -15,7 +14,6 @@ import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
-import java.io.UncheckedIOException
 import java.net.URI
 import java.net.URL
 import java.time.OffsetDateTime
@@ -25,9 +23,9 @@ import kotlin.jvm.java
 
 internal object NasaRepository : MediaRepository {
 
-    private const val SERVICE_PROPERTIES = "nasa-media-search-properties"
-    private const val BASE_URL_KEY = "base-url"
-    private const val LOGGING_LEVEL_KEY = "logging-level"
+    private const val SERVICE_PROPERTIES = "nasa-media-search.properties"
+    private const val BASE_URL_KEY = "base_url"
+    private const val LOGGING_LEVEL_KEY = "logging_level"
     private const val CANONICAL_ROLE = "canonical"
     private const val THUMBNAIL_ROLE = "preview"
 
@@ -126,7 +124,7 @@ internal object NasaRepository : MediaRepository {
             .execute()
         return if (!response.isSuccessful) {
             throw RuntimeException("Request was not processed successfully.")
-        } else if (response.body == null) {
+        } else if (response.body() == null) {
             throw RuntimeException("Request did not result in a valid response.")
         } else {
             response.body()!!

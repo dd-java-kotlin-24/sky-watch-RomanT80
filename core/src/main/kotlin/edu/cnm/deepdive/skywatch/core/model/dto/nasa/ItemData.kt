@@ -9,6 +9,6 @@ data class ItemData(
     val center: String,
     @Json(name = "date_created") val dateCreated: OffsetDateTime,
     val description: String,
-    val keywords: List<String>,//TODO: Consider overriding equals and hashcode
+    val keywords: List<String> = listOf()
 
     )
