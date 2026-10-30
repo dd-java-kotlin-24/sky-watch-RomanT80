@@ -14,6 +14,7 @@
  *  limitations under the License.
  */
 import org.gradle.api.tasks.testing.logging.TestLogEvent
+import org.gradle.kotlin.dsl.invoke
 
 plugins {
     alias(libs.plugins.kotlin.jvm)
@@ -27,8 +28,19 @@ val javaVersion = libs.versions.java.get()
 kotlin {
     jvmToolchain(javaVersion.toInt())
 }
-
+tasks.jar{
+   manifest{
+       attributes(
+           mapOf(
+               "Automatic-Module-Name" to "edu.cnm.deepdive.skywatch.core"
+           )
+       )
+    }
+}
 dependencies {
+
+    implementation(libs.kotlin.coroutines.core)
+    implementation(libs.kotlin.coroutines.jdk8)
 
     implementation(libs.retrofit.core)
     implementation(libs.retrofit.converter.moshi)

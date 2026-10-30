@@ -109,7 +109,7 @@ internal object NasaRepository : MediaRepository {
      * @throws Exception (with specific type specified by implementation) for any other
      * network-access or service communication failure.
      */
-    override fun search(
+    suspend override fun search(
         searchFilter: String?,
         startDate: OffsetDateTime?,
         endDate: OffsetDateTime?,

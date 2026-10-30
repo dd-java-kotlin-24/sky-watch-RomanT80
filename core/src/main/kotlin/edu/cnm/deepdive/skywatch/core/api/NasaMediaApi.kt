@@ -7,7 +7,7 @@ import retrofit2.http.Query
 
 interface NasaMediaApi {
     @GET("/search")
-    fun search(
+    suspend fun search(
         @Query("q") query: String? = null,
         @Query("media_type") mediatype: String = "image",
         @Query("year_start") startYear: Int? = null,

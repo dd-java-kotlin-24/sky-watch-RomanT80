@@ -1,0 +1,5 @@
+BorderPane#rootPane{
+
+  -fx-min-width: 720px;
+  -fx-min-height: 600;
+}

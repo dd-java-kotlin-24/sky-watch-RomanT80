@@ -44,7 +44,7 @@ interface MediaRepository {
      * network-access or service communication failure.
      */
 
-    fun search(
+    suspend fun search(
         searchFilter: String? = null,
         startDate: OffsetDateTime? = null,
         endDate: OffsetDateTime? = null,
