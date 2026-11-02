@@ -15,10 +15,8 @@
  */
 package edu.cnm.deepdive.skywatch.javafx;
 
-import edu.cnm.deepdive.skywatch.core.repository.NasaRepository;
-import edu.cnm.deepdive.skywatch.core.service.MediaSearchServiceImpl;
 import edu.cnm.deepdive.skywatch.javafx.controller.MainController;
-import edu.cnm.deepdive.skywatch.javafx.viewmodel.SearchViewModel;
+import edu.cnm.deepdive.skywatch.javafx.di.DaggerJavaFxComponent;
 import java.util.ResourceBundle;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
@@ -45,7 +43,7 @@ public class SkyWatchApplication extends Application {
 
     loader.setControllerFactory((type) -> {
       if (type == MainController.class) {
-        return DaggerJavaFxComponent.create().mainController;
+        return DaggerJavaFxComponent.create().mainController();
 
       } else {
         throw new IllegalArgumentException("Unsupported controller class: %s".formatted(type));

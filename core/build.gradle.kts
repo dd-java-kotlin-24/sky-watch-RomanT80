@@ -46,10 +46,13 @@ dependencies {
     implementation(libs.logging.interceptor)
 
 
+
+
     testImplementation(libs.kotlin.test)
     testImplementation(libs.junit.aggregator)
     testRuntimeOnly(libs.junit.engine)
     testRuntimeOnly(libs.junit.platform)
+    testImplementation(kotlin("reflect"))
 }
 
 

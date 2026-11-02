@@ -109,7 +109,7 @@ internal object NasaRepository : MediaRepository {
      * @throws Exception (with specific type specified by implementation) for any other
      * network-access or service communication failure.
      */
-    suspend override fun search(
+    override suspend fun search(
         searchFilter: String?,
         startDate: OffsetDateTime?,
         endDate: OffsetDateTime?,
@@ -121,7 +121,7 @@ internal object NasaRepository : MediaRepository {
             startYear = startDate?.year,
             endYear = endDate?.year
         )
-            .execute()
+
         return if (!response.isSuccessful) {
             throw RuntimeException("Request was not processed successfully.")
         } else if (response.body() == null) {
