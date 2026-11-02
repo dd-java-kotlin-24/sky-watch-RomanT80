@@ -28,19 +28,15 @@ val javaVersion = libs.versions.java.get()
 kotlin {
     jvmToolchain(javaVersion.toInt())
 }
-tasks.jar{
-   manifest{
-       attributes(
-           mapOf(
-               "Automatic-Module-Name" to "edu.cnm.deepdive.skywatch.core"
-           )
-       )
-    }
-}
+
 dependencies {
 
     implementation(libs.kotlin.coroutines.core)
     implementation(libs.kotlin.coroutines.jdk8)
+
+    ksp(libs.dagger.compiler)
+    implementation(libs.dagger.core)
+    implementation(libs.jakarta.inject)
 
     implementation(libs.retrofit.core)
     implementation(libs.retrofit.converter.moshi)
@@ -73,5 +69,15 @@ tasks.javadoc {
     with(options as StandardJavadocDocletOptions) {
         links("https://docs.oracle.com/en/java/javase/${javaVersion}/docs/api/")
     }
+}
+tasks.withType<JavaCompile> {
+    options.compilerArgumentProviders.add(
+        CommandLineArgumentProvider {
+            listOf(
+               "--patch-module",
+                "edu.cnm.deepdive.skywatch.core=${sourceSets["main"].output.asPath}"
+            )
+        }
+    )
 }
 

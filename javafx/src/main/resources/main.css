@@ -4,7 +4,7 @@ BorderPane#rootPane {
   -fx-min-height: 600;
 }
 
-#searchResults {
+#searchControls {
   -fx-spacing: 10px;
   -fx-alignment: baseline-center;
   -fx-padding: 10px;

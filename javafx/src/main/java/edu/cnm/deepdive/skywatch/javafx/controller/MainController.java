@@ -1,6 +1,8 @@
 package edu.cnm.deepdive.skywatch.javafx.controller;
 
 import edu.cnm.deepdive.skywatch.core.model.SearchResultImage;
+import edu.cnm.deepdive.skywatch.javafx.viewmodel.SearchViewModel;
+import jakarta.inject.Inject;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -10,6 +12,8 @@ import javafx.scene.layout.BorderPane;
 
 public class MainController {
 
+  @FXML
+  private final SearchViewModel viewModel;
 
   @FXML
    private BorderPane rootPane;
@@ -19,7 +23,12 @@ public class MainController {
   private Button search;
   @FXML
   private ListView<SearchResultImage> searchResults;
-  @FXML
+
+  @Inject
+  public MainController(SearchViewModel viewModel) {
+    this.viewModel = viewModel;
+  }
+
   private void search(ActionEvent actionEvent) {
     // TODO: 2026-11-02 Invoke search method on viewmodel
   }
