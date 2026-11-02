@@ -1,8 +1,11 @@
 package edu.cnm.deepdive.skywatch.javafx.controller;
 
 import edu.cnm.deepdive.skywatch.core.model.SearchResultImage;
+import edu.cnm.deepdive.skywatch.javafx.adapter.SearchResultImageAdapter;
 import edu.cnm.deepdive.skywatch.javafx.viewmodel.SearchViewModel;
 import jakarta.inject.Inject;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -32,7 +35,10 @@ public class MainController {
   @FXML
   private void initialize() {
     viewModel.subscribeToResult((results) -> {
-      System.out.println(results);
+      searchResults.setCellFactory(new SearchResultImageAdapter());
+     var items = searchResults.getItems();
+     items.clear();
+     items.addAll(results);
     });
   }
 
