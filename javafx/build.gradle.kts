@@ -56,6 +56,8 @@ dependencies {
 
     implementation(project(":core"))
 
+implementation(libs.openjfx.controls)
+    implementation(libs.openjfx.fxml)
     implementation(libs.jspecify)
     implementation(libs.jakarta.inject)
     ksp(libs.dagger.compiler)
@@ -86,7 +88,7 @@ tasks.javadoc {
 }
 
 tasks.named<JavaExec>("run"){
-    jvmArgs ("--enable-native-access=javafx.graphics")
+    jvmArgs ("--enable-native-access=javafx.graphics,ALL-UNAMED")
 }
 fun subprojectProperty(name: String): Provider<String> =
     subprojectProperties.map { properties ->
