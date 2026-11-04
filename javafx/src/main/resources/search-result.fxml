@@ -2,18 +2,34 @@
 
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
 
 <GridPane xmlns="http://javafx.com/javafx"
-  xmlns:fx="http://javafx.com./fxml"
+  xmlns:fx="http://javafx.com/fxml"
   stylesheets="@main.css">
+
+  <columnConstraints>
+    <ColumnConstraints
+      hgrow="ALWAYS"
+      minWidth="0.0"/>
+    <ColumnConstraints
+      hgrow="NEVER"
+      minWidth="120.0"
+      prefWidth="120.0"
+      maxWidth="120.0"/>
+  </columnConstraints>
+
   <Label
     fx:id="description"
+    wrapText="true"
     GridPane.rowIndex="0"
     GridPane.columnIndex="0"/>
 
   <ImageView
     fx:id="thumbnail"
+    fitWidth="120.0"
+    preserveRatio="true"
     GridPane.rowIndex="0"
     GridPane.columnIndex="1"/>
 
