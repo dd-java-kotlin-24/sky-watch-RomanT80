@@ -9,3 +9,18 @@ BorderPane#rootPane {
   -fx-alignment: baseline-center;
   -fx-padding: 10px;
 }
+#searchResults {
+  -fx-padding: 5px;
+  -fx-hgap: 10px;
+  -fx-vgap: 5px;
+}
+
+#searchResults .list-cell {
+  -fx-pref-width: 0;
+}
+
+#searchResults #description {
+  -fx-wrap-text: true;
+  -fx-max-height: 120px;
+  -fx-text-overrun: word-ellipsis;
+}
