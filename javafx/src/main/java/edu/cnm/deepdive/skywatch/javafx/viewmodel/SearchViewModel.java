@@ -33,7 +33,7 @@ public class SearchViewModel {
     .thenAccept(searchResultImages -> {
       for (var subscriber : SearchResultSubscribers) {
         Platform.runLater(() -> subscriber.accept(searchResultImages));
-        subscriber.accept(searchResultImages);
+
       }
 
     })

@@ -34,8 +34,8 @@ public class MainController {
 
   @FXML
   private void initialize() {
-    viewModel.subscribeToResult((results) -> {
       searchResults.setCellFactory(new SearchResultImageAdapter());
+    viewModel.subscribeToResult((results) -> {
      var items = searchResults.getItems();
      items.clear();
      items.addAll(results);
