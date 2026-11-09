@@ -12,12 +12,17 @@ import edu.cnm.deepdive.skywatch.app.databinding.ActivityMainBinding
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var binding: ActivityMainBinding
+    private val binding: ActivityMainBinding by lazy {
+        ActivityMainBinding.inflate(layoutInflater)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
+        setupLayout()
+    }
 
+    private fun setupLayout() {
         enableEdgeToEdge()
         setContentView(binding.root) // TODO: Change to use view binding
         ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, insets ->
@@ -25,5 +30,6 @@ class MainActivity : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+        binding.searchResults
     }
 }
