@@ -11,6 +11,7 @@ import jakarta.inject.Inject;
 import java.time.OffsetDateTime;
 import java.util.List;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 @HiltViewModel
 public class SearchViewModel extends ViewModel {
@@ -38,9 +39,9 @@ public class SearchViewModel extends ViewModel {
   }
 
   public void search(
-      @NonNull String searchFilter,
-      @NonNull OffsetDateTime startDate,
-      @NonNull OffsetDateTime endDate
+      @Nullable String searchFilter,
+      @Nullable OffsetDateTime startDate,
+      @Nullable OffsetDateTime endDate
   ) {
 service
     .search(searchFilter, startDate, endDate)
