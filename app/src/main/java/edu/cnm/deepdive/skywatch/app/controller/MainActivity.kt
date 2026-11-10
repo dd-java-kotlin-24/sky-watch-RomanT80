@@ -7,7 +7,6 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.ViewModelProvider
 import dagger.hilt.android.AndroidEntryPoint
-import edu.cnm.deepdive.skywatch.app.R
 import edu.cnm.deepdive.skywatch.app.adapter.SearchResultsAdapter
 import edu.cnm.deepdive.skywatch.app.databinding.ActivityMainBinding
 import edu.cnm.deepdive.skywatch.app.viewmodel.SearchViewModel
@@ -17,7 +16,7 @@ import jakarta.inject.Inject
 class MainActivity : AppCompatActivity() {
 
     @Inject
-    private lateinit var adapter: SearchResultsAdapter
+    internal lateinit var adapter: SearchResultsAdapter
 
     private val binding: ActivityMainBinding by lazy {
         ActivityMainBinding.inflate(layoutInflater)
@@ -27,8 +26,9 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityMainBinding.inflate(layoutInflater)
         setupLayout()
+        setupViewModel()
+        setupListeners()
     }
 
     private fun setupLayout() {
@@ -50,7 +50,8 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun setupListners(){
+    private fun setupListeners(){
+        binding.searchResults.adapter = adapter
         binding
             .submit
             .setOnClickListener {
