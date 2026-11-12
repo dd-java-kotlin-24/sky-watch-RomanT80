@@ -17,6 +17,9 @@ package edu.cnm.deepdive.skywatch.app;
 
 import android.app.Application;
 import dagger.hilt.android.HiltAndroidApp;
+import edu.cnm.deepdive.skywatch.app.database.SkyWatchDatabase;
+import edu.cnm.deepdive.skywatch.app.model.dao.UserDao;
+import jakarta.inject.Inject;
 
 /**
  * Initializes (in the {@link #onCreate()} method) application-level resources that cannot be
@@ -25,6 +28,8 @@ import dagger.hilt.android.HiltAndroidApp;
  */
 @HiltAndroidApp
 public class SkyWatchApplication extends Application {
+  @Inject
+  UserDao userDao;
 
   @Override
   public void onCreate() {
