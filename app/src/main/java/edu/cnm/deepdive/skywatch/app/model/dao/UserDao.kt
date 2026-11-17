@@ -19,10 +19,10 @@ interface UserDao {
     suspend fun update(user: User): Int
 
     @Delete
-    suspend fun delete(user: User)
+    suspend fun delete(user: User): Int
 
     @Query(USER_ID_QUERY)
-    fun selectAll(id: Long): LiveData<User>
+    fun select(id: Long): LiveData<User>
 
     @Query("SELECT * FROM user WHERE oauth_key = :oauthKey")
     suspend fun  select(oauthKey: String): User?

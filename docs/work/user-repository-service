@@ -1,0 +1,347 @@
+Configured authentication: Organization
+
+Here is an architectural recommendation for structuring your repositories and service layer in the `app` subproject, with first-class support for both **Kotlin** and **Java** consumers (ViewModels and UI controllers).
+
+---
+
+### 1. Architectural Strategy & Layering
+
+To achieve clean separation of concerns and allow Java ViewModels to seamlessly interact with your Kotlin components:
+
+```
+┌────────────────────────────────────────────────────────┐
+│             UI / ViewModels (Java or Kotlin)           │
+└───────────────────────────┬────────────────────────────┘
+                            │ Injects
+┌───────────────────────────▼────────────────────────────┐
+│                      Service Layer                     │
+│  • UserService: Maintains & exposes current User       │
+│  • FavoriteService: Coordinates User & Favorites       │
+│  • Java-interop bridge: CompletableFuture & LiveData   │
+└─────────────┬────────────────────────────┬─────────────┘
+              │ Injects                    │ Injects
+┌─────────────▼────────────┐ ┌─────────────▼────────────┐
+│      UserRepository      │ │    FavoriteRepository    │
+│  (Database abstraction)  │ │  (Database abstraction)  │
+└─────────────┬────────────┘ └─────────────┬────────────┘
+              │ Injects                    │ Injects
+┌─────────────▼────────────┐ ┌─────────────▼────────────┐
+│         UserDao          │ │        FavoriteDao       │
+└──────────────────────────┘ └──────────────────────────┘
+```
+
+#### Why a Service Layer is Appropriate Here:
+1. **Current User Context**: A `UserService` acts as the single source of truth for the active session. Rather than forcing every ViewModel or Repository to query and track user IDs manually, `UserService` holds the active state.
+2. **Java Interoperability Boundary**: Room DAOs and Kotlin repositories often rely on Kotlin `suspend` functions. Calling `suspend` functions directly from Java requires passing synthetic `Continuation` instances, which is cumbersome and unidiomatic. A Service layer is the ideal place to convert coroutines to `CompletableFuture<T>` using `scope.future { ... }` (matching the pattern already used by `MediaSearchService` in your `:core` module).
+3. **Cross-Domain Coordination**: `FavoriteService` can inject `UserService`, retrieve the active user, and handle favorite toggling or querying without burdening ViewModels with user-id plumbing.
+
+---
+
+### 2. Java & Kotlin Interoperability Guidelines
+
+* **Observable Data Streams**: Expose `androidx.lifecycle.LiveData<T>`. Room natively returns `LiveData` for queries. Because `LiveData` is implemented in Java, it can be consumed directly in Java ViewModels/Controllers without coroutine collectors.
+* **One-Shot / Asynchronous Actions (Inserts, Updates, Deletes)**:
+  Expose `java.util.concurrent.CompletableFuture<T>` at the service layer using `kotlinx.coroutines.future.future`. In Java ViewModels, you can consume these identically to `SearchViewModel.java`:
+  ```java
+  service.addFavorite(item)
+      .thenAccept(favorite -> ...)
+      .exceptionally(this::postThrowable);
+  ```
+* **Annotations**: Annotate Kotlin methods with `@JvmOverloads` when default arguments are used, and avoid exposing Kotlin-only language constructs (such as raw `suspend` functions) on classes intended for Java consumption.
+
+---
+
+### 3. Component Design & Recommendations
+
+#### A. `UserRepository` (Data Access Abstraction)
+Focuses strictly on Room queries and mutations for `User`.
+
+```kotlin
+package edu.cnm.deepdive.skywatch.app.repository
+
+import androidx.lifecycle.LiveData
+import edu.cnm.deepdive.skywatch.app.model.dao.UserDao
+import edu.cnm.deepdive.skywatch.app.model.entity.User
+import jakarta.inject.Inject
+import jakarta.inject.Singleton
+import java.net.URL
+import kotlin.time.Clock
+
+@Singleton
+class UserRepository @Inject constructor(
+    private val userDao: UserDao
+) {
+
+    fun get(id: Long): LiveData<User> = userDao.select(id)
+
+    suspend fun getByOauthKey(oauthKey: String): User? = userDao.select(oauthKey)
+
+    suspend fun save(user: User): User {
+        return if (user.id == 0L) {
+            val id = userDao.insert(user)
+            user.copy(id = id)
+        } else {
+            userDao.update(user)
+            user
+        }
+    }
+
+    suspend fun delete(user: User) = userDao.delete(user)
+
+    /**
+     * Finds an existing user by OAuth key or creates a new record.
+     */
+    suspend fun getOrCreate(oauthKey: String, displayName: String, avatar: URL? = null): User {
+        return userDao.select(oauthKey) ?: run {
+            val newUser = User(
+                oauthKey = oauthKey,
+                displayName = displayName,
+                avatar = avatar,
+                created = Clock.System.now()
+            )
+            val id = userDao.insert(newUser)
+            newUser.copy(id = id)
+        }
+    }
+}
+```
+
+---
+
+#### B. `UserService` (Session & Current User Service)
+Coordinates user sessions and provides Java-friendly APIs.
+
+```kotlin
+package edu.cnm.deepdive.skywatch.app.service
+
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import edu.cnm.deepdive.skywatch.app.model.entity.User
+import edu.cnm.deepdive.skywatch.app.repository.UserRepository
+import jakarta.inject.Inject
+import jakarta.inject.Singleton
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.future.future
+import java.net.URL
+import java.util.concurrent.CompletableFuture
+
+@Singleton
+class UserService @Inject constructor(
+    private val userRepository: UserRepository
+) {
+
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val _currentUser = MutableLiveData<User?>()
+
+    /**
+     * LiveData representing the currently active user, easily observable from Java and Kotlin.
+     */
+    val currentUser: LiveData<User?> = _currentUser
+
+    /**
+     * Signs in or activates a user by OAuth credentials and posts to [currentUser].
+     * Returns a CompletableFuture for seamless consumption in Java ViewModels.
+     */
+    fun login(oauthKey: String, displayName: String, avatar: URL? = null): CompletableFuture<User> =
+        scope.future {
+            val user = userRepository.getOrCreate(oauthKey, displayName, avatar)
+            _currentUser.postValue(user)
+            user
+        }
+
+    fun logout(): CompletableFuture<Void> =
+        scope.future {
+            _currentUser.postValue(null)
+            null
+        }
+
+    fun updateUser(user: User): CompletableFuture<User> =
+        scope.future {
+            val updated = userRepository.save(user)
+            _currentUser.postValue(updated)
+            updated
+        }
+}
+```
+
+---
+
+#### C. `FavoriteRepository` (Data Access Abstraction)
+Interacts with `FavoriteDao` for persistent CRUD operations.
+
+```kotlin
+package edu.cnm.deepdive.skywatch.app.repository
+
+import androidx.lifecycle.LiveData
+import edu.cnm.deepdive.skywatch.app.model.dao.FavoriteDao
+import edu.cnm.deepdive.skywatch.app.model.entity.Favorite
+import jakarta.inject.Inject
+import jakarta.inject.Singleton
+
+@Singleton
+class FavoriteRepository @Inject constructor(
+    private val favoriteDao: FavoriteDao
+) {
+
+    fun getFavoritesByDescription(userId: Long): LiveData<List<Favorite>> =
+        favoriteDao.selectOrderByDescription(userId)
+
+    fun getFavoritesByFavorited(userId: Long): LiveData<List<Favorite>> =
+        favoriteDao.selectOrderByFavorited(userId)
+
+    suspend fun save(favorite: Favorite): Favorite {
+        val id = favoriteDao.insert(favorite)
+        return favorite.copy(id = id)
+    }
+
+    suspend fun delete(favorite: Favorite): Int =
+        favoriteDao.delete(favorite)
+}
+```
+
+---
+
+#### D. `FavoriteService` (Domain Service)
+Injects both `FavoriteRepository` and `UserService` to expose high-level operations that automatically bind to the active user.
+
+```kotlin
+package edu.cnm.deepdive.skywatch.app.service
+
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.Transformations
+import edu.cnm.deepdive.skywatch.app.model.entity.Favorite
+import edu.cnm.deepdive.skywatch.app.model.entity.User
+import edu.cnm.deepdive.skywatch.app.repository.FavoriteRepository
+import jakarta.inject.Inject
+import jakarta.inject.Singleton
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.future.future
+import java.net.URL
+import java.util.concurrent.CompletableFuture
+import kotlin.time.Clock
+
+@Singleton
+class FavoriteService @Inject constructor(
+    private val favoriteRepository: FavoriteRepository,
+    private val userService: UserService
+) {
+
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    /**
+     * Automatically switches favorites whenever the current user changes.
+     */
+    fun getCurrentUserFavorites(): LiveData<List<Favorite>> {
+        return Transformations.switchMap(userService.currentUser) { user: User? ->
+            if (user != null) {
+                favoriteRepository.getFavoritesByFavorited(user.id)
+            } else {
+                androidx.lifecycle.MutableLiveData(emptyList())
+            }
+        }
+    }
+
+    fun addFavorite(
+        externalKey: String,
+        description: String,
+        thumbnail: URL,
+        image: URL
+    ): CompletableFuture<Favorite> = scope.future {
+        val currentUser = userService.currentUser.value
+            ?: throw IllegalStateException("Cannot add favorite without an active user.")
+        val favorite = Favorite(
+            externalKey = externalKey,
+            description = description,
+            thumbnail = thumbnail,
+            image = image,
+            favorited = Clock.System.now(),
+            userId = currentUser.id
+        )
+        favoriteRepository.save(favorite)
+    }
+
+    fun removeFavorite(favorite: Favorite): CompletableFuture<Void> = scope.future {
+        favoriteRepository.delete(favorite)
+        null
+    }
+}
+```
+
+---
+
+### 4. Example Consumption in a Java ViewModel
+
+Because the services expose `LiveData` and `CompletableFuture`, a Java ViewModel interacts with them cleanly without any coroutines overhead:
+
+```java
+package edu.cnm.deepdive.skywatch.app.viewmodel;
+
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.ViewModel;
+import dagger.hilt.android.lifecycle.HiltViewModel;
+import edu.cnm.deepdive.skywatch.app.model.entity.Favorite;
+import edu.cnm.deepdive.skywatch.app.model.entity.User;
+import edu.cnm.deepdive.skywatch.app.service.FavoriteService;
+import edu.cnm.deepdive.skywatch.app.service.UserService;
+import jakarta.inject.Inject;
+import java.util.List;
+
+@HiltViewModel
+public class UserFavoriteViewModel extends ViewModel {
+
+    private final UserService userService;
+    private final FavoriteService favoriteService;
+    private final MutableLiveData<Throwable> throwable = new MutableLiveData<>();
+
+    @Inject
+    public UserFavoriteViewModel(UserService userService, FavoriteService favoriteService) {
+        this.userService = userService;
+        this.favoriteService = favoriteService;
+    }
+
+    public LiveData<User> getCurrentUser() {
+        return userService.getCurrentUser();
+    }
+
+    public LiveData<List<Favorite>> getFavorites() {
+        return favoriteService.getCurrentUserFavorites();
+    }
+
+    public void removeFavorite(Favorite favorite) {
+        favoriteService.removeFavorite(favorite)
+            .exceptionally(err -> {
+                throwable.postValue(err);
+                return null;
+            });
+    }
+
+    public LiveData<Throwable> getThrowable() {
+        return throwable;
+    }
+}
+```
+
+---
+
+### 5. DAO Observations to Consider
+
+1. **`UserDao.kt` method naming**:
+   `fun selectAll(id: Long): LiveData<User>` filters on `user_id = :id` and returns a single user. Renaming it to `fun select(id: Long): LiveData<User>` or `selectById` avoids confusion with table-wide queries.
+2. **`UserRepository.kt` constructor**:
+   Currently declares `class UserRepository(private val UserDao: UserDao)`. It should use `@Inject constructor(...)` and idiomatic camelCase `private val userDao: UserDao`.
+3. **`FavoriteDao.kt` query expansion**:
+   Adding a query such as:
+   ```kotlin
+   @Query("SELECT * FROM favorite WHERE user_id = :userId AND external_key = :externalKey")
+   fun select(userId: Long, externalKey: String): LiveData<Favorite?>
+   ```
+   will make it easy for UI items to observe whether a given search result is already favorited by the user.
+
+---
+
+Would you like to proceed with implementing these repositories and services, or would you like to refine any of the contracts first?
