@@ -12,12 +12,13 @@ import edu.cnm.deepdive.skywatch.app.databinding.FragmentSearchBinding
 import edu.cnm.deepdive.skywatch.app.viewmodel.SearchViewModel
 import jakarta.inject.Inject
 
+@AndroidEntryPoint
 class SearchFragment : Fragment() {
-    @AndroidEntryPoint
 
     private var binding: FragmentSearchBinding? = null
     private lateinit var viewModel: SearchViewModel
-    @Inject lateinit var adapter: SearchResultsAdapter
+    @Inject
+    lateinit var adapter: SearchResultsAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,17 +48,18 @@ class SearchFragment : Fragment() {
 
         super.onDestroyView()
     }
+
     private fun setupViewModel() {
         viewModel = ViewModelProvider(requireActivity())[SearchViewModel::class.java]
         viewModel
             .searchResults
             .observe(viewLifecycleOwner) { results ->
-            adapter.clear()
-            adapter.addAll(results)
-        }
+                adapter.clear()
+                adapter.addAll(results)
+            }
     }
 
-    private fun setupListeners(){
+    private fun setupListeners() {
         binding?.run {
 
             searchResults.adapter = adapter
