@@ -1,43 +1,17 @@
 package edu.cnm.deepdive.skywatch.app.repository
 
 import androidx.lifecycle.LiveData
-import edu.cnm.deepdive.skywatch.app.model.dao.UserDao
 import edu.cnm.deepdive.skywatch.app.model.entity.User
-import jakarta.inject.Inject
-import jakarta.inject.Singleton
 import java.net.URL
-import kotlin.time.Clock
 
-@Singleton
+interface UserRepository {
+    suspend fun insert(user: User): Long
 
-class UserRepository @Inject constructor(private val userDao: UserDao) {
+    suspend fun update(user: User): Int
 
-    suspend fun insert(user: User): Long =
-        userDao.insert(user)
+    suspend fun delete(user: User): Int
+    fun select(userId: Long): LiveData<User>
 
-    suspend fun update(user: User): Int =
-        userDao.update(user)
 
-    suspend fun delete(user: User): Int =
-        userDao.delete(user)
-
-    fun select(userId: Long): LiveData<User> =
-        userDao.select(userId)
-
-    @JvmOverloads
-    suspend fun selectOrCreate(oauthKey: String, displayName: String, avatar: URL? = null): User {
-      var user= userDao.select(oauthKey)
-      if (user == null) {
-          user = User(
-              oauthKey = oauthKey,
-              displayName = displayName,
-              avatar = avatar,
-              created = Clock.System.now()
-              )
-          val id: Long = userDao.insert(user)
-          user = user.copy(id = id)
-      }
-        return user
-    }
-
+    suspend fun selectOrCreate(oauthKey: String, displayName: String, avatar: URL? = null): User
 }

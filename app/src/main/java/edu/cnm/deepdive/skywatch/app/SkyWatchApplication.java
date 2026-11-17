@@ -28,8 +28,6 @@ import jakarta.inject.Inject;
  */
 @HiltAndroidApp
 public class SkyWatchApplication extends Application {
-  @Inject
-  UserDao userDao;
 
   @Override
   public void onCreate() {
