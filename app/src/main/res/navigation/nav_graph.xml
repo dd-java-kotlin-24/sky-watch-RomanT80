@@ -9,13 +9,24 @@
     android:id="@+id/search_fragment"
     android:name="edu.cnm.deepdive.skywatch.app.controller.SearchFragment"
     android:label="@string/search_title"
-    tools:layout="@layout/activity_main"/>
+    tools:layout="@layout/activity_main">
 
-<!--  TODO Add fragment definition for favorites-->
-<fragment
-  android:id="@+id/settings_fragment"
-  android:name="edu.cnm.deepdive.skywatch.app.controller.SettingsFragment"
-  android:label="@string/settings_title" />
+    <action
+      android:id="@+id/open_item"
+      app:destination="@id/item_fragment"/>
 
+  </fragment>
+
+  <!--  TODO Add fragment definition for favorites-->
+  <fragment
+    android:id="@+id/settings_fragment"
+    android:name="edu.cnm.deepdive.skywatch.app.controller.SettingsFragment"
+    android:label="@string/settings_title"/>
+
+  <fragment
+    android:id="@+id/item_fragment"
+    android:name="edu.cnm.deepdive.skywatch.app.controller.ItemFragment"
+    android:label="@string/item_title"
+    tools:layout="@layout/fragment_item"/>
 
 </navigation>

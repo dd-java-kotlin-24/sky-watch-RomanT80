@@ -20,12 +20,15 @@ public class SearchViewModel extends ViewModel {
   private static final String TAG = SearchViewModel.class.getSimpleName();
   private final MediaSearchService service;
   private final MutableLiveData<List<SearchResultImage>> searchResults;
+
+  private final MutableLiveData<SearchResultImage> selectedItem;
   private final MutableLiveData<Throwable> throwable;
 
   @Inject
    SearchViewModel(@NonNull MediaSearchService service) {
     this.service = service;
     searchResults = new MutableLiveData<>();
+    selectedItem = new MutableLiveData<>();
     throwable = new MutableLiveData<>();
   }
 
@@ -34,6 +37,12 @@ public class SearchViewModel extends ViewModel {
     return searchResults;
   }
 
+  public @NonNull LiveData<SearchResultImage> getSelectedItem() {
+    return selectedItem;
+  }
+  public void setSelectedItem(@Nullable SearchResultImage item) {
+    selectedItem.setValue(item);
+  }
   public @NonNull LiveData<Throwable> getThrowable() {
     return throwable;
   }
