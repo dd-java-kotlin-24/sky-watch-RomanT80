@@ -41,6 +41,6 @@ data class Favorite(
     val favorited: Instant,
 
     @ColumnInfo(name = "user_id")
-    val userId: Long,
+    val userId: Long? = null,
 
     )

@@ -136,11 +136,21 @@ internal object NasaRepository : MediaRepository {
     private fun extractResult(item: SearchItem): SearchResultImage {
         val itemData: ItemData = item.data[0]
         val links: List<Link> = item.links
-        val canonical = links.firstOrNull { it.role == CANONICAL_ROLE }
-            ?: links.maxBy { it.width ?: 0 }
-        val thumbnail = links.firstOrNull { it.role == THUMBNAIL_ROLE }
-            ?: links.minBy { it.width ?: Int.MAX_VALUE }
-        return SearchResultImage(itemData.description, itemData.keywords, canonical.url, thumbnail.url)
+        val canonical = links
+            .firstOrNull { it.role == CANONICAL_ROLE && it. isJpeg }
+            ?: links
+                .filter(Link::isJpeg)
+                .maxBy { it.width ?: 0 }
+        val thumbnail = links
+            .firstOrNull { it.role == THUMBNAIL_ROLE && it. isJpeg }
+            ?: links
+                .filter(Link::isJpeg)
+                .minBy { it.width ?: Int.MAX_VALUE }
+        return SearchResultImage(
+            itemData.description,
+            itemData.keywords,
+            canonical.url,
+            thumbnail.url)
 
     }
 }
@@ -169,3 +179,7 @@ private class UrlAdapter {
 
 
 }
+
+private val Link.isJpeg: Boolean
+    get() = url.toString().endsWith(".jpg", true) ||
+        url.toString().endsWith(".jpeg", true)
